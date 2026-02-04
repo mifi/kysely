@@ -242,6 +242,7 @@ export type {
   NumbersWhenDataTypeNotAvailable,
   NotNull,
   NumericString,
+  NoDehydrate,
   ShallowDehydrateObject,
   ShallowDehydrateValue,
   SimplifyResult,

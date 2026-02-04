@@ -219,6 +219,20 @@ export type ShallowRecord<K extends keyof any, T> = DrainOuterGeneric<{
   [P in K]: T
 }>
 
+declare const noDehydrateBrand: unique symbol
+
+type NoDehydrateBrand = { readonly [noDehydrateBrand]?: true }
+
+export type NoDehydrate<T> = T & NoDehydrateBrand
+
+type StripNoDehydrate<T> = T extends infer U & NoDehydrateBrand ? U : T
+
+type StripNoDehydrateInArray<T> = T extends (infer U)[]
+  ? StripNoDehydrate<U>[]
+  : T extends null | undefined
+    ? T
+    : T
+
 /**
  * Dehydrates any root properties of an object that are not valid JSON types.
  *
@@ -236,19 +250,21 @@ export type ShallowDehydrateObject<O> = {
  */
 export type ShallowDehydrateValue<T> = T extends null | undefined
   ? T
-  : T extends (infer U)[] | null | undefined
-    ? Array<ShallowDehydrateValue<U>> | Extract<T, null | undefined>
-    :
-        | Exclude<
-            T,
-            StringsWhenDataTypeNotAvailable | NumbersWhenDataTypeNotAvailable
-          >
-        | ([Extract<T, NumbersWhenDataTypeNotAvailable>] extends [never]
-            ? never
-            : number)
-        | ([Extract<T, StringsWhenDataTypeNotAvailable>] extends [never]
-            ? never
-            : string)
+  : T extends NoDehydrateBrand
+    ? StripNoDehydrateInArray<StripNoDehydrate<T>>
+    : T extends (infer U)[] | null | undefined
+      ? Array<ShallowDehydrateValue<U>> | Extract<T, null | undefined>
+      :
+          | Exclude<
+              T,
+              StringsWhenDataTypeNotAvailable | NumbersWhenDataTypeNotAvailable
+            >
+          | ([Extract<T, NumbersWhenDataTypeNotAvailable>] extends [never]
+              ? never
+              : number)
+          | ([Extract<T, StringsWhenDataTypeNotAvailable>] extends [never]
+              ? never
+              : string)
 
 export type StringsWhenDataTypeNotAvailable =
   | Date
